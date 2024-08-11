@@ -38,11 +38,6 @@ function LoginPage() {
         padding: 3,
       }}
     >
-      <Avatar
-        src={user ? user.photoURL : '/path-to-default-icon.png'}
-        alt={user ? user.displayName : 'Login'}
-        sx={{ width: 80, height: 80, mb: 4 }}
-      />
 
       <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
         Data Structures and Algorithms Helper AI Bot
@@ -79,9 +74,6 @@ function LoginPage() {
         </>
       ) : (
         <>
-          <Typography variant="h4" sx={{ mb: 4 }}>
-            Login
-          </Typography>
           <Button
             variant="contained"
             onClick={handleLogin}
