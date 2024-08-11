@@ -132,7 +132,7 @@ export default function Home() {
     chats: [
       {
         id: 1,
-        messages: [{ role: 'assistant', content: 'Hello! Im here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences.' }]
+        messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences."' }]
       }
     ]
   });
@@ -147,7 +147,7 @@ export default function Home() {
   const handleAddChat = () => {
     const newChat = {
       id: currentUser.chats.length + 1,
-      messages: [{ role: 'assistant', content: 'Hello! Im here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences.' }],
+      messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences." }],
     };
     setCurrentUser({
       ...currentUser,
