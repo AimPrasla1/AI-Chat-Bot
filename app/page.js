@@ -5,33 +5,40 @@ import LoginPage from './login'; // Import the login page
 import { auth, signOutFromGoogle } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-function ChatHistory({ chats, onSelectChat, onAddChat }) {
+function ChatHistory({ chats, onSelectChat, onAddChat, onDeleteChat }) {
   return (
-    <Box sx={{ width: '100%', height: '100%', bgcolor: '#333', p: 2, borderRadius: '7px', color: 'white' }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
+    <Box sx={{ width: '100%', height: '90vh', bgcolor: '#333', p: 2, borderRadius: '7px', color: 'white', display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="h3" sx={{ mb: 2 }}>
         Chat History
       </Typography>
-      {chats.map((chat, index) => (
-        <Box
-          key={chat.id}
-          sx={{
-            mb: 2,
-            p: 2,
-            borderRadius: '7px',
-            bgcolor: '#444',
-            cursor: 'pointer',
-            '&:hover': {
-              bgcolor: '#555',
-            },
-          }}
-          onClick={() => onSelectChat(index)}
-        >
-          <Typography variant="body2">Chat {chat.id}</Typography>
-        </Box>
-      ))}
-      <Button variant="contained" sx={{ mt: 2, bgcolor: '#009193', borderRadius: '7px' }} onClick={onAddChat}>
-        New Chat
-      </Button>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+        {chats.map((chat, index) => (
+          <Box
+            key={chat.id}
+            sx={{
+              mb: 2,
+              p: 2,
+              borderRadius: '7px',
+              bgcolor: '#444',
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: '#555',
+              },
+            }}
+            onClick={() => onSelectChat(index)}
+          >
+            <Typography variant="h5">{chat.title}</Typography>
+          </Box>
+        ))}
+      </Box>
+      <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ mt: 2 }}>
+        <Button variant="contained" sx={{ bgcolor: '#009193', borderRadius: '7px' }} onClick={onAddChat}>
+          New Chat
+        </Button>
+        <Button variant="contained" color="error" sx={{ borderRadius: '7px' }} onClick={onDeleteChat}>
+          Delete Chat
+        </Button>
+      </Stack>
     </Box>
   );
 }
@@ -51,23 +58,42 @@ function ChatBox({ chat, onSendMessage, message, setMessage, isLoading }) {
     <Box
       sx={{
         width: '100%',
-        height: '100%',
+        height: '90vh',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: '#000',
         borderRadius: '7px',
         p: 2,
+        overflowY: 'auto',
       }}
     >
       <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2 }}>
         {chat.messages.map((message, index) => (
-          <Box key={index} sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ color: message.role === 'user' ? 'white' : '#009193' }}>
-              {message.content}
-            </Typography>
+          <Box
+            key={index}
+            sx={{
+              display: 'flex',
+              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              mb: 2,
+            }}
+          >
+            {message.content && (
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: '7px',
+                  bgcolor: message.role === 'user' ? '#009193' : '#333',
+                  color: message.role === 'user' ? 'black' : 'white',
+                  maxWidth: '80%',
+                }}
+              >
+                <Typography variant="h6" sx={{ fontSize: '18px' }}>
+                  {message.content}
+                </Typography>
+              </Box>
+            )}
           </Box>
         ))}
-        <div ref={messagesEndRef} />
       </Box>
       <Stack direction="row" spacing={2}>
         <TextField
@@ -111,7 +137,7 @@ function ChatBox({ chat, onSendMessage, message, setMessage, isLoading }) {
           disabled={isLoading}
           sx={{
             bgcolor: '#009193',
-            color: 'black',
+            color: 'white',
             borderRadius: '7px',
             '&:hover': {
               bgcolor: '#009193',
@@ -125,6 +151,8 @@ function ChatBox({ chat, onSendMessage, message, setMessage, isLoading }) {
   );
 }
 
+
+
 export default function Home() {
   const [user] = useAuthState(auth); // Firebase authentication state
   const [currentUser, setCurrentUser] = useState({
@@ -132,7 +160,8 @@ export default function Home() {
     chats: [
       {
         id: 1,
-        messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences."}]
+        title: 'First Chat',
+        messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences." }]
       }
     ]
   });
@@ -147,6 +176,7 @@ export default function Home() {
   const handleAddChat = () => {
     const newChat = {
       id: currentUser.chats.length + 1,
+      title: 'New Chat',
       messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences." }],
     };
     setCurrentUser({
@@ -154,6 +184,14 @@ export default function Home() {
       chats: [...currentUser.chats, newChat],
     });
     setSelectedChatIndex(currentUser.chats.length); // Select the new chat
+  };
+
+  const handleDeleteChat = () => {
+    if (currentUser.chats.length === 1) return; // Prevent deleting the last chat
+
+    const updatedChats = currentUser.chats.filter((_, index) => index !== selectedChatIndex);
+    setCurrentUser({ ...currentUser, chats: updatedChats });
+    setSelectedChatIndex(Math.max(0, selectedChatIndex - 1)); // Select the previous chat or the first one
   };
 
   const handleSendMessage = async () => {
@@ -185,6 +223,8 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
+      let dynamicTitleSet = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -195,11 +235,21 @@ export default function Home() {
           const lastMessage = updatedMessages[updatedMessages.length - 1];
           const otherMessages = updatedMessages.slice(0, updatedMessages.length - 1);
 
-          const updatedChats = prevUser.chats.map((chat, index) =>
-            index === selectedChatIndex
-              ? { ...chat, messages: [...otherMessages, { ...lastMessage, content: lastMessage.content + text }] }
-              : chat
-          );
+          const updatedChats = prevUser.chats.map((chat, index) => {
+            if (index === selectedChatIndex) {
+              // Set dynamic title based on the first user message
+              const title = !dynamicTitleSet && chat.messages.length > 1 ? chat.messages[1].content.slice(0, 20) : chat.title;
+              dynamicTitleSet = true;
+
+              return {
+                ...chat,
+                title: title,
+                messages: [...otherMessages, { ...lastMessage, content: lastMessage.content + text }]
+              };
+            } else {
+              return chat;
+            }
+          });
 
           return { ...prevUser, chats: updatedChats };
         });
@@ -246,8 +296,8 @@ export default function Home() {
       <Box
         sx={{
           width: '100%',
-          bgcolor: 'white',
-          color: 'black',
+          bgcolor: '#333',
+          color: 'white',
           padding: '16px',
           display: 'flex',
           justifyContent: 'space-between',
@@ -255,8 +305,19 @@ export default function Home() {
           mb: 3,
         }}
       >
-        <Typography variant="h5">My Chat Application</Typography>
-        <Button variant="contained" color="secondary" onClick={handleLogout}>
+        <Typography variant="h5">Data Structures and Algorithms Bot</Typography>
+        <Button
+          variant="contained"
+          onClick={handleLogout}
+          sx={{
+            bgcolor: '#009193',
+            color: 'white',
+            borderRadius: '7px',
+            '&:hover': {
+              bgcolor: '#009193',
+            },
+          }}
+        >
           Logout
         </Button>
       </Box>
@@ -268,6 +329,7 @@ export default function Home() {
             chats={currentUser.chats}
             onSelectChat={handleSelectChat}
             onAddChat={handleAddChat}
+            onDeleteChat={handleDeleteChat}
           />
         </Grid>
 
