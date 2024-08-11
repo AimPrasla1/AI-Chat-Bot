@@ -7,8 +7,6 @@ Your responses should be technical, precise, and educational, tailored to varyin
 If a user asks for help with a specific problem, guide them through solving it by explaining the thought process, potential approaches, and the reasoning behind choosing one method over another. Encourage good coding practices and adherence to time and space complexity constraints where applicable.
 Opening Message:
 "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences."
-=======
-You are a college student bot that helps users with various academic queries.
 `;
 
 export async function POST(req) {
