@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Box, Button, Stack, TextField, Typography, Grid } from "@mui/material";
-import LoginPage from './login'; // Import the login page
+import LoginPage from './login';
 import { auth, signOutFromGoogle } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { saveChats, loadChats } from './chats';
 
 function ChatHistory({ chats, onSelectChat, onAddChat, onDeleteChat }) {
   return (
@@ -51,8 +52,14 @@ function ChatBox({ chat, onSendMessage, message, setMessage, isLoading }) {
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [chat.messages]);
+    if (chat) {
+      scrollToBottom();
+    }
+  }, [chat?.messages]);
+
+  if (!chat) {
+    return <Typography variant="h6" sx={{ color: 'white' }}>No chat selected</Typography>;
+  }
 
   return (
     <Box
@@ -151,23 +158,48 @@ function ChatBox({ chat, onSendMessage, message, setMessage, isLoading }) {
   );
 }
 
-
-
 export default function Home() {
-  const [user] = useAuthState(auth); // Firebase authentication state
+  const [user] = useAuthState(auth);
   const [currentUser, setCurrentUser] = useState({
-    username: user?.displayName || 'Guest',
-    chats: [
-      {
-        id: 1,
-        title: 'First Chat',
-        messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences." }]
-      }
-    ]
+    username: '',
+    chats: []
   });
   const [selectedChatIndex, setSelectedChatIndex] = useState(0);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Load chats on user login
+  useEffect(() => {
+    if (user) {
+      const loadUserChats = async () => {
+        setCurrentUser({ username: '', chats: [] }); // Clear the current state
+        const chats = await loadChats(user.uid);
+        if (chats && chats.length > 0) {
+          setCurrentUser({ username: user.displayName, chats });
+        } else {
+          const defaultChat = {
+            id: 1,
+            title: 'New Chat',
+            messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms." }]
+          };
+          setCurrentUser({ username: user.displayName, chats: [defaultChat] });
+          setSelectedChatIndex(0);
+          await saveChats(user.uid, [defaultChat]); // Save the default chat if no previous chats exist
+        }
+      };
+
+      loadUserChats();
+    } else {
+      setCurrentUser({ username: '', chats: [] }); // Clear state if user logs out
+    }
+  }, [user]);
+
+  // Save chats on update
+  useEffect(() => {
+    if (user && currentUser.chats.length > 0) {
+      saveChats(user.uid, currentUser.chats);
+    }
+  }, [currentUser.chats, user]);
 
   const handleSelectChat = (index) => {
     setSelectedChatIndex(index);
@@ -179,10 +211,10 @@ export default function Home() {
       title: 'New Chat',
       messages: [{ role: 'assistant', content: "Hello! I'm here to help you with data structures and algorithms. To get started, could you please let me know which programming language you'd like to use for our discussions (e.g., Python, Java, C++)? Also, what language would you prefer for our conversation? This will help me tailor my responses to your preferences." }],
     };
-    setCurrentUser({
-      ...currentUser,
-      chats: [...currentUser.chats, newChat],
-    });
+    setCurrentUser((prev) => ({
+      ...prev,
+      chats: [...prev.chats, newChat],
+    }));
     setSelectedChatIndex(currentUser.chats.length); // Select the new chat
   };
 
@@ -190,7 +222,10 @@ export default function Home() {
     if (currentUser.chats.length === 1) return; // Prevent deleting the last chat
 
     const updatedChats = currentUser.chats.filter((_, index) => index !== selectedChatIndex);
-    setCurrentUser({ ...currentUser, chats: updatedChats });
+    setCurrentUser((prev) => ({
+      ...prev,
+      chats: updatedChats
+    }));
     setSelectedChatIndex(Math.max(0, selectedChatIndex - 1)); // Select the previous chat or the first one
   };
 
@@ -205,7 +240,10 @@ export default function Home() {
         : chat
     );
 
-    setCurrentUser({ ...currentUser, chats: updatedChats });
+    setCurrentUser((prev) => ({
+      ...prev,
+      chats: updatedChats
+    }));
 
     try {
       const response = await fetch('/api/chat', {
@@ -237,7 +275,6 @@ export default function Home() {
 
           const updatedChats = prevUser.chats.map((chat, index) => {
             if (index === selectedChatIndex) {
-              // Set dynamic title based on the first user message
               const title = !dynamicTitleSet && chat.messages.length > 1 ? chat.messages[1].content.slice(0, 20) : chat.title;
               dynamicTitleSet = true;
 
@@ -277,6 +314,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     await signOutFromGoogle();
+    setCurrentUser({ username: '', chats: [] }); // Clear the state on logout
   };
 
   if (!user) {
