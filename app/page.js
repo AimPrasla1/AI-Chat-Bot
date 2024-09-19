@@ -343,7 +343,7 @@ export default function Home() {
           mb: 3,
         }}
       >
-        <Typography variant="h5">Data Structures and Algorithms Bot</Typography>
+        <Typography variant="h5">CodeX AI</Typography>
         <Button
           variant="contained"
           onClick={handleLogout}

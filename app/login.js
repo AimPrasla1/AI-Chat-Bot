@@ -40,7 +40,7 @@ function LoginPage() {
     >
 
       <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-        Data Structures and Algorithms Helper AI Bot
+        CodeX AI
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, textAlign: 'center', color: 'rgba(255, 255, 255, 0.8)' }}>
         AI bot made to help you learn in-depth DSA skills
